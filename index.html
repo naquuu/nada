@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Romantic Notification App – HTML</title>
+  <!-- Tailwind CDN (untuk styling cepat) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons (ikon Heart, AlertTriangle) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    /* Animasi lembut untuk hati latar */
+    @keyframes floaty {
+      0% { transform: translateY(0) scale(1); opacity: 0.15; }
+      50% { opacity: 0.3; }
+      100% { transform: translateY(-80vh) scale(1.08); opacity: 0.1; }
+    }
+    .float-heart {
+      position: absolute;
+      animation-name: floaty;
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
+      will-change: transform, opacity;
+    }
+    /* Utility kecil untuk animasi masuk modal */
+    @keyframes slideInTop {
+      from { transform: translateY(-16px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .animate-slide-in-top {
+      animation: slideInTop 300ms ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-pink-100 via-red-50 to-rose-100 flex items-center justify-center p-4 relative overflow-hidden">
+
+  <!-- Latar: Floating Hearts -->
+  <div id="hearts-bg" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+
+  <!-- Kartu Layar Awal -->
+  <div id="start-card" class="w-full max-w-md mx-auto bg-white/90 backdrop-blur-sm shadow-xl border-2 border-pink-200 rounded-xl p-8 text-center">
+    <div class="mb-6">
+      <i data-lucide="heart" class="w-16 h-16 text-red-500 mx-auto mb-4 animate-bounce"></i>
+      <h1 class="text-2xl font-bold text-gray-800 mb-2">Pesan Spesial Untukmu 💕</h1>
+      <p class="text-gray-600">Aku pengen ngomong sesuatu...</p>
+    </div>
+    <button id="btn-start" class="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white px-8 py-3 rounded-full shadow-lg transform hover:scale-105 transition-all duration-200">
+      Baca Pesan ❤️
+    </button>
+  </div>
+
+  <!-- Modal Notifikasi “Error” Lucu -->
+  <div id="modal-overlay" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg shadow-2xl max-w-md w-full border-2 border-red-200 animate-slide-in-top">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-red-500 to-pink-500 text-white p-4 rounded-t-lg flex items-center gap-3">
+        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        <div>
+          <h3 class="font-semibold text-lg">WARNING</h3>
+          <p class="text-red-100 text-sm">heart palpitations detected</p>
+        </div>
+      </div>
+      <!-- Body -->
+      <div class="p-6">
+        <div class="flex items-start gap-4 mb-6">
+          <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <i data-lucide="heart" class="w-6 h-6 text-red-500"></i>
+          </div>
+          <div class="flex-1">
+            <h4 class="font-semibold text-gray-800 mb-2">messed up because of you</h4>
+            <p id="message-text" class="text-lg text-gray-700 font-medium bg-gray-50 p-3 rounded border-l-4 border-pink-400">"..."</p>
+          </div>
+        </div>
+
+        <div id="debug-line" class="text-xs text-gray-500 mb-4 font-mono bg-gray-100 p-2 rounded">
+          Error location: Heart.exe line 0<br/>
+          Stack trace: Feelings → Love → Romance → You
+        </div>
+
+        <div class="flex justify-end">
+          <button id="btn-next" class="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white px-6 py-2 rounded shadow-lg transform hover:scale-105 transition-all duration-200">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Kecil -->
+  <div id="footer-note" class="absolute bottom-8 left-1/2 -translate-x-1/2 text-pink-600 text-center">
+    Made with 💕 for someone special
+  </div>
+
+  <script>
+    // Inisialisasi ikon Lucide
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) { window.lucide.createIcons(); }
+    });
+
+    // Data pesan (sama seperti versi React)
+    const messages = [
+      "hai sayang",
+      "jangan bosen ya sama aku",
+      "hati-hati ya aku mudah kangen mbek km",
+      "Aku sayang kamu",
+      "kalo kamu gimana? sayang juga nggak sih?"
+    ];
+
+    let currentMessage = -1;
+
+    const startCard = document.getElementById('start-card');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const messageText = document.getElementById('message-text');
+    const debugLine = document.getElementById('debug-line');
+    const btnStart = document.getElementById('btn-start');
+    const btnNext = document.getElementById('btn-next');
+
+    // Render hati latar acak
+    const heartsBg = document.getElementById('hearts-bg');
+    (function renderFloatingHearts(count = 15) {
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        // Pakai SVG heart sederhana agar ringan
+        el.innerHTML = `
+          <svg viewBox="0 0 24 24" class="w-full h-full">
+            <path fill="currentColor"
+              d="M12.1 21.35l-1.1-1C5.14 15.24 2 12.39 2 8.99 2 6.24 4.24 4 6.99 4c1.54 0 3.04.74 4.01 1.9C12.97 4.74 14.47 4 16.01 4 18.76 4 21 6.24 21 8.99c0 3.4-3.14 6.25-8.99 11.36l-1.91 1z"/>
+          </svg>
+        `;
+        const size = Math.random() * 30 + 20; // 20–50px
+        el.style.left = `${Math.random() * 100}%`;
+        el.style.top = `${Math.random() * 100}%`;
+        el.style.width = `${size}px`;
+        el.style.height = `${size}px`;
+        el.style.color = 'rgb(249 168 212)'; // pink-300
+        el.style.opacity = '0.2';
+        el.className = 'float-heart';
+        // Durasi & delay random untuk variasi
+        el.style.animationDuration = `${(Math.random() * 4 + 6).toFixed(2)}s`;
+        el.style.animationDelay = `${(Math.random() * 3).toFixed(2)}s`;
+        heartsBg.appendChild(el);
+      }
+    })();
+
+    function showStartScreen() {
+      currentMessage = -1;
+      startCard.classList.remove('hidden');
+      modalOverlay.classList.add('hidden');
+    }
+
+    function showModalWithMessage(index) {
+      messageText.textContent = `"${messages[index]}"`;
+      debugLine.innerHTML = `Error location: Heart.exe line ${index + 1}<br/>Stack trace: Feelings → Love → Romance → You`;
+      startCard.classList.add('hidden');
+      modalOverlay.classList.remove('hidden');
+      // refresh lucide icons (jaga-jaga setelah DOM berubah)
+      if (window.lucide) { window.lucide.createIcons(); }
+    }
+
+    btnStart.addEventListener('click', () => {
+      currentMessage = 0;
+      showModalWithMessage(currentMessage);
+    });
+
+    btnNext.addEventListener('click', () => {
+      if (currentMessage < messages.length - 1) {
+        currentMessage += 1;
+        showModalWithMessage(currentMessage);
+      } else {
+        // selesai → kembali ke layar awal
+        showStartScreen();
+      }
+    });
+
+    // Mulai di layar awal
+    showStartScreen();
+  </script>
+</body>
+</html>
